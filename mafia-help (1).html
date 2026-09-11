@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Play — Mafia</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1e2127;
+    --panel2: #23262c;
+    --line: #2c3037;
+    --accent: #b5504f;
+    --accent2: #c9a24b;
+    --text: #e9e7e2;
+    --muted: #8b8f98;
+    --green: #4f9b6e;
+    --blue: #4f7fb5;
+    --bodyguard: #6b8fa3;
+    --cupid: #d47a9c;
+    --necromancer: #8a5fc9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 20px 16px 60px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  a.back {
+    display: inline-block;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+  }
+  h1 { font-size: 1.5rem; color: var(--accent2); margin: 0 0 6px 0; }
+  p.sub { color: var(--muted); font-size: 0.92rem; margin: 0 0 22px 0; line-height: 1.5; }
+  h2 { font-size: 1.1rem; color: var(--accent2); margin: 30px 0 12px 0; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card p { margin: 0 0 8px 0; font-size: 0.92rem; line-height: 1.55; }
+  .card p:last-child { margin-bottom: 0; }
+  .role-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .role-card h3 {
+    margin: 0 0 6px 0;
+    font-size: 1.05rem;
+  }
+  .role-card p { margin: 0; font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
+  .role-mafia { border-left-color: var(--accent); }
+  .role-mafia h3 { color: var(--accent); }
+  .role-doctor { border-left-color: var(--green); }
+  .role-doctor h3 { color: var(--green); }
+  .role-sheriff { border-left-color: var(--blue); }
+  .role-sheriff h3 { color: var(--blue); }
+  .role-bodyguard { border-left-color: var(--bodyguard); }
+  .role-bodyguard h3 { color: var(--bodyguard); }
+  .role-necromancer { border-left-color: var(--necromancer); }
+  .role-necromancer h3 { color: var(--necromancer); }
+  .role-civilian { border-left-color: var(--muted); }
+  .role-civilian h3 { color: var(--muted); }
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 38px;
+    margin-bottom: 16px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--panel2);
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .steps li strong { color: var(--text); }
+  .win-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .win-box .icon { font-size: 1.4rem; }
+  .win-box .txt { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
+  .win-box .txt strong { color: var(--text); }
+  .tip { font-size: 0.82rem; color: var(--muted); font-style: italic; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="javascript:window.close()">← Close this tab</a>
+  <h1>🔪 How to Play Mafia</h1>
+  <p class="sub">A village has a monster problem. Every night, a few people among you secretly try to pick everyone else off. Every day, everyone argues about who it might be — and votes someone out. Find the Mafia before they find you.</p>
+
+  <h2>The shape of a round</h2>
+  <div class="card">
+    <ol class="steps">
+      <li><strong>Night falls.</strong> Everyone closes their eyes (metaphorically — just don't peek at each other's screens). Anyone with a night power quietly makes their choice.</li>
+      <li><strong>Morning comes.</strong> The narrator reveals what happened overnight — who's missing, and why.</li>
+      <li><strong>The village argues.</strong> Everyone discusses out loud who they suspect. This is the whole game, honestly — the app just keeps score.</li>
+      <li><strong>The village votes.</strong> Whoever gets the most votes is eliminated. Their role may or may not get revealed, narrator's call.</li>
+      <li><strong>Repeat</strong> until one side can't win anymore.</li>
+    </ol>
+    <p class="tip">Dead players don't leave the game entirely — some roles work from beyond the grave. Stick around.</p>
+  </div>
+
+  <h2>How anyone actually wins</h2>
+  <div class="card">
+    <div class="win-box">
+      <span class="icon">🏆</span>
+      <span class="txt"><strong>Town wins</strong> the moment every last Mafia member is gone — voted out or otherwise.</span>
+    </div>
+    <div class="win-box">
+      <span class="icon">🔪</span>
+      <span class="txt"><strong>Mafia wins</strong> the instant their numbers catch up to (or overtake) everyone else still standing. They don't need to wipe the village out — just outnumber it.</span>
+    </div>
+    <div class="win-box">
+      <span class="icon">💔</span>
+      <span class="txt"><strong>The Lovers win too</strong> — quietly, on the side — if both of them are still alive when the game ends, no matter which of the above happens. Doesn't matter if they're on opposite teams.</span>
+    </div>
+  </div>
+
+  <h2>The roles</h2>
+
+  <div class="role-card role-mafia">
+    <h3>🔪 Mafia</h3>
+    <p>Each night, the Mafia team secretly agrees on one player to eliminate — everyone on the team has to unanimously agree before it's final. By day, act normal. That's the whole job.</p>
+  </div>
+
+  <div class="role-card role-doctor">
+    <h3>💉 Doctor</h3>
+    <p>Each night, pick someone to protect — yourself included. If the Mafia targets that exact person, nothing happens — nobody dies, and the narrator will publicly announce that your save worked, so you'll find out.</p>
+  </div>
+
+  <div class="role-card role-sheriff">
+    <h3>🔎 Sheriff</h3>
+    <p>Each night, investigate one player (not yourself). You'll immediately learn if they're Mafia or not. Use that knowledge carefully — announcing it outright just makes you the next target.</p>
+  </div>
+
+  <div class="role-card role-bodyguard">
+    <h3>🛡️ Bodyguard</h3>
+    <p>On the very first night only, choose one player (not yourself) to protect for the <em>entire rest of the game</em> — no take-backs. If the Mafia ever targets your person, you take the hit instead and die in their place — unless the Doctor happens to save them that same night, in which case nobody dies at all and you both live to see another night. Choose wisely; you won't get to change your mind.</p>
+  </div>
+
+  <div class="role-card role-necromancer">
+    <h3>👻 Necromancer</h3>
+    <p>Once per game, on any night you choose, ask one dead player a single yes-or-no question. They can answer honestly — or lie through their teeth. You'll never really know which. Use it wisely; you only get the one shot.</p>
+  </div>
+
+  <div class="role-card role-civilian">
+    <h3>🧑‍🌾 Civilian</h3>
+    <p>No powers, no secrets — just your voice and your judgment. Pay attention, ask good questions, and vote carefully. Most games are won or lost by civilians reading the room correctly.</p>
+  </div>
+
+  <h2>Game modes</h2>
+  <div class="card">
+    <p><strong style="color:var(--cupid)">💘 Lovers Mode</strong> — this isn't a role, and nobody plays it. If your narrator turns it on, the moment the game begins, the game itself secretly and randomly links two players together as Lovers — before anyone even learns their own role. If you're one of them, you'll find out privately, along with who your other half is.</p>
+    <p>Neither of you learns anything about the other's actual role — just that you're now linked. If one of you dies, for any reason at all, the other dies too, of heartbreak. But if you're both still alive when the game ends, the two of you quietly win together — on top of, or even instead of, whichever main side wins.</p>
+  </div>
+
+  <p class="tip" style="margin-top:24px; text-align:center;">Good luck. Trust no one. Probably.</p>
+
+</div>
+</body>
+</html>
