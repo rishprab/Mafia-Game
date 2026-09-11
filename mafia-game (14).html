@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mafia</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1e2127;
+    --panel2: #23262c;
+    --line: #2c3037;
+    --accent: #b5504f;
+    --accent2: #c9a24b;
+    --text: #e9e7e2;
+    --muted: #8b8f98;
+    --green: #4f9b6e;
+    --blue: #4f7fb5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 18px;
+  }
+  h1 { font-size: 1.4rem; color: var(--accent2); margin: 0 0 4px 0; }
+  h2 { font-size: 1.1rem; color: var(--accent2); margin: 18px 0 8px 0; }
+  p.sub { color: var(--muted); font-size: 0.85rem; margin: 0 0 18px 0; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  input[type=text], input[type=number] {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+  button {
+    background: var(--accent);
+    border: none;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  button.secondary { background: var(--panel2); border: 1px solid var(--line); color: var(--text); }
+  button.gold { background: var(--accent2); color: #14161a; }
+  button.green { background: var(--green); }
+  button:disabled { opacity: 0.4; }
+  .roomcode {
+    font-size: 2rem;
+    letter-spacing: 6px;
+    text-align: center;
+    color: var(--accent2);
+    font-weight: 700;
+    margin: 8px 0;
+  }
+  .player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+  .player-row:last-child { border-bottom: none; }
+  .tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; background: var(--panel2); color: var(--muted); }
+  .tag.dead { color: var(--accent); }
+  .role-box {
+    text-align: center;
+    padding: 30px 16px;
+  }
+  .role-name { font-size: 2rem; font-weight: 700; margin: 10px 0; }
+  .role-name.mafia { color: var(--accent); }
+  .role-name.doctor { color: var(--green); }
+  .role-name.sheriff { color: var(--blue); }
+  .role-name.bodyguard { color: #6b8fa3; }
+  .role-name.necromancer { color: #8a5fc9; }
+  .role-name.civilian { color: var(--muted); }
+  .lover-btn { border-color: #d47a9c !important; background: rgba(212,122,156,0.15) !important; }
+  .role-desc { color: var(--muted); font-size: 0.9rem; }
+  .target-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+  .target-btn.selected { border-color: var(--accent2); background: rgba(201,162,75,0.15); }
+  .log-entry { font-size: 0.85rem; color: var(--muted); padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .log-entry:last-child { border-bottom: none; }
+  .status-pill { display: inline-block; font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; background: var(--panel2); color: var(--accent2); margin-bottom: 12px; }
+  .center { text-align: center; }
+  .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+  .switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 24px; transition: 0.15s;
+  }
+  .slider:before {
+    content: ""; position: absolute; height: 18px; width: 18px;
+    left: 2px; bottom: 2px; background: var(--muted); border-radius: 50%; transition: 0.15s;
+  }
+  input:checked + .slider { background: var(--accent2); border-color: var(--accent2); }
+  input:checked + .slider:before { background: #14161a; transform: translateX(20px); }
+  .small { font-size: 0.78rem; color: var(--muted); }
+  .waiting-icon { font-size: 2.5rem; text-align: center; margin: 20px 0; opacity: 0.6; }
+  .help-fab {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 50;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<a href="help.html" target="_blank" rel="noopener" class="help-fab" aria-label="How to play">❓</a>
+
+<h1>🔪 Mafia</h1>
+<p class="sub" id="topSub">Play a live game of Mafia with friends.</p>
+
+<!-- LANDING -->
+<div id="screen-landing" class="screen active">
+  <div class="card">
+    <h2 style="margin-top:0">Your name</h2>
+    <input type="text" id="nameInput" placeholder="Enter your name" maxlength="16">
+  </div>
+  <div class="card">
+    <button class="gold" onclick="createGame()">Create Game (I'm the Narrator)</button>
+  </div>
+  <div class="card">
+    <input type="text" id="joinCodeInput" placeholder="Room code" maxlength="4" style="text-transform:uppercase">
+    <button onclick="joinGame()">Join Game</button>
+  </div>
+  <p class="small center" id="landingError"></p>
+</div>
+
+<!-- LOBBY -->
+<div id="screen-lobby" class="screen">
+  <div class="card center">
+    <p class="small">Room code — share this with your friends</p>
+    <div class="roomcode" id="lobbyCode">----</div>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Players (<span id="playerCount">0</span>)</h2>
+    <div id="lobbyPlayerList"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Special Roles</h2>
+    <label class="small">Number of Mafia</label>
+    <input type="number" id="mafiaCountInput" min="1" oninput="onMafiaCountInput()">
+    <div class="toggle-row">
+      <span>Include Doctor</span>
+      <label class="switch">
+        <input type="checkbox" id="doctorToggle" onchange="setIncludeDoctor(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>Include Sheriff</span>
+      <label class="switch">
+        <input type="checkbox" id="sheriffToggle" onchange="setIncludeSheriff(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>Include Bodyguard</span>
+      <label class="switch">
+        <input type="checkbox" id="bodyguardToggle" onchange="setIncludeBodyguard(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <span>Include Lovers Mode</span>
+      <label class="switch">
+        <input type="checkbox" id="loversToggle" onchange="setIncludeLovers(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="small">Not a role — the game randomly links two players as secret Lovers at the start. If one dies, the other dies of heartbreak. Both surviving to the end is a secret win for them, on top of whichever side wins.</p>
+    <div class="toggle-row">
+      <span>Include Necromancer</span>
+      <label class="switch">
+        <input type="checkbox" id="necromancerToggle" onchange="setIncludeNecromancer(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Game Settings</h2>
+    <div class="toggle-row">
+      <span>Suspense Mode</span>
+      <label class="switch">
+        <input type="checkbox" id="suspenseToggle" onchange="setSuspenseMode(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="small">Hides the game log from players — only the narrator sees what happened, to narrate it themselves.</p>
+  </div>
+  <div id="narratorStartBox" class="card" style="display:none">
+    <p class="small" id="lobbyWarning"></p>
+    <button class="gold" onclick="startGame()">Start Game</button>
+  </div>
+  <div id="playerWaitBox" class="card center" style="display:none">
+    <p class="small">Waiting for the narrator to start the game...</p>
+  </div>
+</div>
+
+<!-- ROLE REVEAL -->
+<div id="screen-role" class="screen">
+  <div class="card role-box">
+    <p class="small">Your role is</p>
+    <div class="role-name" id="roleNameDisplay">-</div>
+    <p class="role-desc" id="roleDescDisplay"></p>
+  </div>
+  <button class="gold" onclick="acknowledgeRole()">Got it</button>
+</div>
+
+<!-- SHERIFF RESULT -->
+<div id="screen-sheriff-result" class="screen">
+  <div class="card role-box">
+    <p class="small">Investigation result</p>
+    <div class="role-name" id="sheriffResultText">-</div>
+  </div>
+  <button class="gold" onclick="acknowledgeSheriffResult()">Got it</button>
+</div>
+
+<!-- LOVER REVEAL -->
+<div id="screen-lover-reveal" class="screen">
+  <div class="card role-box">
+    <p class="small">Fate has spoken</p>
+    <div class="role-name lover-btn" style="border:none; background:none !important; color:#d47a9c;" id="loverRevealText">-</div>
+    <p class="role-desc">If either of you dies, the other dies of heartbreak. If you're both still alive when the game ends, you win together as a pair — regardless of which main side wins.</p>
+  </div>
+  <button class="gold" onclick="acknowledgeLoverReveal()">Got it</button>
+</div>
+
+<!-- NECROMANCER ASK -->
+<div id="screen-necromancer-ask" class="screen">
+  <div class="card">
+    <h2 style="margin-top:0">Ask a dead player</h2>
+    <p class="small">You may use this once, on any night. They can only answer Yes or No — and they don't have to tell the truth.</p>
+    <div id="necromancerDeadList"></div>
+    <div id="necromancerQuestionBox" style="display:none">
+      <input type="text" id="necromancerQuestionInput" placeholder="Your yes/no question" maxlength="120">
+      <button class="gold" onclick="submitNecromancerQuestion()">Send Question</button>
+    </div>
+  </div>
+  <button class="secondary" onclick="skipNecromancerTonight()">Not tonight</button>
+</div>
+
+<!-- NECROMANCER WAITING (for the asker) -->
+<div id="screen-necromancer-waiting" class="screen">
+  <div class="waiting-icon">👻</div>
+  <p class="center small" id="necromancerWaitingText">Waiting for their answer...</p>
+</div>
+
+<!-- NECROMANCER ANSWER (for the dead player being asked) -->
+<div id="screen-necromancer-answer" class="screen">
+  <div class="card">
+    <h2 style="margin-top:0">You're being asked a question</h2>
+    <p class="small" id="necromancerAskerLabel"></p>
+    <p style="font-size:1.1rem; margin:16px 0" id="necromancerQuestionText"></p>
+    <button class="gold" onclick="submitNecromancerAnswer(true)">Yes</button>
+    <button class="secondary" onclick="submitNecromancerAnswer(false)">No</button>
+  </div>
+</div>
+
+<!-- NECROMANCER RESULT (for the necromancer, once answered) -->
+<div id="screen-necromancer-result" class="screen">
+  <div class="card role-box">
+    <p class="small">You asked <span id="necromancerResultTarget">-</span>:</p>
+    <p style="font-size:1.05rem; margin:10px 0" id="necromancerResultQuestion">-</p>
+    <div class="role-name necromancer" id="necromancerResultAnswer">-</div>
+    <p class="role-desc">Remember — the dead don't have to tell the truth.</p>
+  </div>
+  <button class="gold" onclick="acknowledgeNecromancerResult()">Got it</button>
+</div>
+
+<!-- WAITING (generic) -->
+<div id="screen-waiting" class="screen">
+  <div class="waiting-icon">🌙</div>
+  <p class="center small" id="waitingText">Waiting...</p>
+  <div class="card" id="publicLogBoxWaiting"></div>
+</div>
+
+<!-- NIGHT ACTION -->
+<div id="screen-night-action" class="screen">
+  <div class="card">
+    <h2 style="margin-top:0" id="nightActionTitle">Choose your target</h2>
+    <div id="nightActionList"></div>
+  </div>
+  <p class="small center" id="nightActionStatus"></p>
+</div>
+
+<!-- DAY -->
+<div id="screen-day" class="screen">
+  <div class="status-pill">Daytime — discuss in person</div>
+  <div class="card" id="dayLogBox">
+    <h2 style="margin-top:0">What happened</h2>
+    <div id="dayLogList"></div>
+  </div>
+  <div class="card center" id="dayPlayerWaitBox">
+    <p class="small">Waiting for the narrator to open voting...</p>
+  </div>
+</div>
+
+<!-- VOTE -->
+<div id="screen-vote" class="screen">
+  <div class="card">
+    <h2 style="margin-top:0">Vote to eliminate</h2>
+    <div id="voteList"></div>
+  </div>
+  <p class="small center" id="voteStatus"></p>
+</div>
+
+<!-- NARRATOR DASHBOARD -->
+<div id="screen-narrator" class="screen">
+  <div class="status-pill" id="narratorPhasePill">-</div>
+  <div class="card">
+    <h2 style="margin-top:0">Players</h2>
+    <div id="narratorPlayerList"></div>
+  </div>
+  <div class="card" id="narratorNightBox" style="display:none">
+    <h2 style="margin-top:0">Night actions</h2>
+    <div id="narratorNightInfo"></div>
+    <button class="green" id="resolveNightBtn" onclick="resolveNight()">Resolve Night</button>
+  </div>
+  <div class="card" id="narratorBodyguardBox" style="display:none">
+    <h2 style="margin-top:0">Bodyguard</h2>
+    <div id="narratorBodyguardInfo"></div>
+  </div>
+  <div class="card" id="narratorLoversBox" style="display:none">
+    <h2 style="margin-top:0">Lovers</h2>
+    <div id="narratorLoversInfo"></div>
+  </div>
+  <div class="card" id="narratorNecromancerBox" style="display:none">
+    <h2 style="margin-top:0">Necromancer</h2>
+    <div id="narratorNecromancerInfo"></div>
+  </div>
+  <div class="card" id="narratorDayBox" style="display:none">
+    <h2 style="margin-top:0">Day</h2>
+    <div id="narratorDayInfo"></div>
+    <button class="gold" onclick="startVote()">Open Voting</button>
+  </div>
+  <div class="card" id="narratorVoteBox" style="display:none">
+    <h2 style="margin-top:0">Votes</h2>
+    <div id="narratorVoteInfo"></div>
+    <button class="green" onclick="resolveVote()">Resolve Vote</button>
+  </div>
+  <div class="card" id="narratorAdvanceBox" style="display:none">
+    <p class="small">No winner yet — round continues.</p>
+    <button class="gold" onclick="startNextNight()">Start Next Night</button>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Game log</h2>
+    <div id="narratorLogList"></div>
+  </div>
+</div>
+
+<!-- ENDED -->
+<div id="screen-ended" class="screen">
+  <div class="card center">
+    <h2 style="margin-top:0" id="winnerTitle">Game Over</h2>
+    <p class="small" id="winnerSub"></p>
+  </div>
+  <div class="card center" id="loversWinBox" style="display:none">
+    <h2 style="margin-top:0; color:#d47a9c">💔 The Lovers Also Win!</h2>
+    <p class="small" id="loversWinText"></p>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Final roles</h2>
+    <div id="finalRolesList"></div>
+  </div>
+  <button class="secondary" onclick="backToStart()">Back to start</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script>
+// ====== PASTE YOUR FIREBASE CONFIG HERE ======
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+// ==============================================
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+let uid = null;
+let gameCode = null;
+let isNarrator = false;
+let mafiaCountTouched = false; // local only — tracks whether the narrator has manually edited the count
+let playerName = "";
+let gameData = null;
+let secretsData = {};
+let roleAcknowledged = false;
+let sheriffResultAckedRound = 0;
+let loverRevealAcked = false;
+let necromancerAnswerAcked = false;
+let gameRef = null;
+
+const ROLE_INFO = {
+  mafia: { label: "Mafia", desc: "Each night, choose a player to eliminate. Don't get caught.", cls: "mafia" },
+  doctor: { label: "Doctor", desc: "Each night, choose a player to save from the Mafia (you may pick yourself).", cls: "doctor" },
+  sheriff: { label: "Sheriff", desc: "Each night, choose a player to investigate. You'll learn if they're Mafia.", cls: "sheriff" },
+  bodyguard: { label: "Bodyguard", desc: "On the first night only, choose someone to protect for the entire rest of the game. If they're attacked, you take the hit instead — but you can't protect yourself.", cls: "bodyguard" },
+  necromancer: { label: "Necromancer", desc: "Once per game, on any night, you may ask a dead player a single yes/no question. They may not answer honestly.", cls: "necromancer" },
+  civilian: { label: "Civilian", desc: "You have no special powers. Use the day discussion to find the Mafia.", cls: "civilian" }
+};
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function showError(msg) {
+  document.getElementById("landingError").textContent = msg;
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    uid = user.uid;
+  }
+});
+auth.signInAnonymously().catch(e => showError("Connection error: " + e.message));
+
+function getMafiaCount(playerCount) {
+  if (playerCount <= 6) return 1;
+  if (playerCount <= 9) return 2;
+  if (playerCount <= 12) return 3;
+  return 4; // 13-15 players
+}
+
+function getAliveMafiaUids() {
+  const team = secretsData.mafiaTeam || {};
+  const players = gameData.players || {};
+  return Object.keys(team).filter(id => players[id] && players[id].alive);
+}
+
+function isRoleActionNeeded(role) {
+  // True only if there is still a living player holding this role.
+  // A role with no living player can never submit again, so it shouldn't block the night.
+  const players = gameData.players || {};
+  const roles = secretsData.roles || {};
+  return Object.entries(players).some(([pid, p]) => p.alive && roles[pid] === role);
+}
+
+function genRoomCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+// ---------- CREATE / JOIN ----------
+function createGame() {
+  playerName = document.getElementById("nameInput").value.trim();
+  if (!playerName) return showError("Enter your name first.");
+  if (!uid) return showError("Still connecting, try again in a second.");
+  gameCode = genRoomCode();
+  isNarrator = true;
+  gameRef = db.ref("games/" + gameCode);
+  gameRef.set({
+    narratorUid: uid,
+    narratorName: playerName,
+    status: "lobby",
+    round: 0,
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
+    log: { init: { text: "Game created. Waiting for players to join.", ts: firebase.database.ServerValue.TIMESTAMP } }
+  }).then(() => {
+    attachGameListener();
+  }).catch(e => showError("Could not create game: " + e.message));
+}
+
+function joinGame() {
+  playerName = document.getElementById("nameInput").value.trim();
+  const code = document.getElementById("joinCodeInput").value.trim().toUpperCase();
+  if (!code) return showError("Enter a room code.");
+  if (!uid) return showError("Still connecting, try again in a second.");
+  gameRef = db.ref("games/" + code);
+  gameRef.once("value").then(snap => {
+    const data = snap.val();
+    if (!data) return showError("No game found with that code.");
+
+    // Reconnecting as the narrator? Restore that role regardless of game status.
+    if (data.narratorUid === uid) {
+      gameCode = code;
+      isNarrator = true;
+      return Promise.resolve();
+    }
+
+    // Reconnecting as a player already in this game? Don't touch their existing data.
+    if (data.players && data.players[uid]) {
+      gameCode = code;
+      isNarrator = false;
+      return Promise.resolve();
+    }
+
+    // Otherwise this is a brand-new player — only allowed while still in the lobby.
+    if (!playerName) return showError("Enter your name first.");
+    if (data.status !== "lobby") return showError("That game has already started, and you weren't already in it.");
+    const currentCount = Object.keys(data.players || {}).length;
+    if (currentCount >= 15) return showError("This game is full (15 players max).");
+    gameCode = code;
+    isNarrator = false;
+    return gameRef.child("players/" + uid).set({
+      name: playerName,
+      alive: true,
+      joinedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+  }).then(() => {
+    if (gameCode) attachGameListener();
+  }).catch(e => showError("Could not join: " + e.message));
+}
+
+// ---------- LIVE LISTENER ----------
+let secretsRefs = [];
+let lastSecretsKey = null;
+
+function teardownSecretsListeners() {
+  secretsRefs.forEach(ref => ref.off());
+  secretsRefs = [];
+}
+
+function listenSecret(path, onData) {
+  const ref = db.ref(path);
+  ref.on("value",
+    snap => { onData(snap.val()); render(); },
+    () => { /* permission not granted for this path yet — expected in some states */ }
+  );
+  secretsRefs.push(ref);
+}
+
+// Firebase denies a read at a parent path unless that exact path (or an ancestor) has
+// permission — it does not partially return children based on their own rules ("rules
+// are not filters"). So instead of one bulk listener on secrets/{code}, each client
+// listens only to the exact deep paths it's actually entitled to read.
+function setupSecretsListeners() {
+  if (!gameData || !uid) return;
+  const round = gameData.round || 0;
+  const status = gameData.status;
+  const myRole = (secretsData.roles || {})[uid];
+  // JSON.stringify (not join) so "not yet loaded" (undefined) and "genuinely no role" (null)
+  // never collapse into the same key — Array.join() would render both as an empty string.
+  const key = JSON.stringify([round, status, isNarrator, myRole]);
+  if (key === lastSecretsKey) return; // nothing relevant changed since last attach
+  lastSecretsKey = key;
+
+  teardownSecretsListeners();
+
+  const nightBase = "secrets/" + gameCode + "/night/" + round + "/";
+  function ensureNightRound() {
+    secretsData.night = secretsData.night || {};
+    secretsData.night[round] = secretsData.night[round] || {};
+    return secretsData.night[round];
+  }
+
+  // Always: my own role — re-run setup once it's known, so role-specific listeners attach
+  listenSecret("secrets/" + gameCode + "/roles/" + uid, val => {
+    secretsData.roles = secretsData.roles || {};
+    const changed = secretsData.roles[uid] !== val;
+    secretsData.roles[uid] = val;
+    if (changed) setTimeout(setupSecretsListeners, 0);
+  });
+
+  // Always: lovers and the necromancer's question are single shared records, not per-uid.
+  // Everyone can attempt to listen — the rule silently denies anyone who isn't the narrator,
+  // one of the two lovers, or one of the two parties in the necromancer exchange.
+  listenSecret("secrets/" + gameCode + "/lovers", val => { secretsData.lovers = val || null; });
+  listenSecret("secrets/" + gameCode + "/necromancerQuestion", val => { secretsData.necromancerQuestion = val || null; });
+
+  if (isNarrator) {
+    Object.keys(gameData.players || {}).forEach(pid => {
+      listenSecret("secrets/" + gameCode + "/roles/" + pid, val => {
+        secretsData.roles = secretsData.roles || {};
+        secretsData.roles[pid] = val;
+      });
+    });
+    listenSecret("secrets/" + gameCode + "/mafiaTeam", val => { secretsData.mafiaTeam = val || {}; });
+    listenSecret("secrets/" + gameCode + "/bodyguardAssignment", val => { secretsData.bodyguardAssignment = val || null; });
+    ["mafiaProposal", "mafiaTarget", "mafiaTargetName", "doctorTarget", "doctorTargetName", "doctorBy", "sheriffTargetName", "sheriffBy", "sheriffResult"].forEach(field => {
+      listenSecret(nightBase + field, val => { ensureNightRound()[field] = val; });
+    });
+    listenSecret(nightBase + "sheriffTarget", val => {
+      const nightRound = ensureNightRound();
+      nightRound.sheriffTarget = val;
+      if (val && !nightRound.sheriffResult) {
+        const isMafia = (secretsData.roles || {})[val] === "mafia";
+        const targetName = (gameData.players && gameData.players[val]) ? gameData.players[val].name : "?";
+        db.ref("secrets/" + gameCode + "/night/" + round + "/sheriffResult").set({ targetName, isMafia })
+          .catch(e => alert("Could not record sheriff result: " + e.message));
+      }
+    });
+  } else if (myRole === "mafia") {
+    listenSecret("secrets/" + gameCode + "/mafiaTeam", val => { secretsData.mafiaTeam = val || {}; });
+    ["mafiaProposal", "mafiaTarget", "mafiaTargetName"].forEach(field => {
+      listenSecret(nightBase + field, val => { ensureNightRound()[field] = val; });
+    });
+  } else if (myRole === "doctor") {
+    listenSecret(nightBase + "doctorTarget", val => { ensureNightRound().doctorTarget = val; });
+  } else if (myRole === "sheriff") {
+    ["sheriffTarget", "sheriffResult"].forEach(field => {
+      listenSecret(nightBase + field, val => { ensureNightRound()[field] = val; });
+    });
+  } else if (myRole === "bodyguard") {
+    listenSecret("secrets/" + gameCode + "/bodyguardAssignment", val => { secretsData.bodyguardAssignment = val || null; });
+  }
+
+  // Once the game has ended, roles open up to everyone for the reveal screen
+  if (status === "ended") {
+    Object.keys(gameData.players || {}).forEach(pid => {
+      listenSecret("secrets/" + gameCode + "/roles/" + pid, val => {
+        secretsData.roles = secretsData.roles || {};
+        secretsData.roles[pid] = val;
+      });
+    });
+  }
+}
+
+function attachGameListener() {
+  gameRef.on("value", snap => {
+    gameData = snap.val();
+    if (!gameData) return;
+    setupSecretsListeners();
+    render();
+  });
+}
+
+// ---------- MAIN RENDER ROUTER ----------
+function render() {
+  if (!gameData) return;
+  document.getElementById("topSub").textContent = "Room " + gameCode + (isNarrator ? " — Narrator view" : "");
+
+  if (gameData.status === "lobby") {
+    renderLobby();
+  } else if (gameData.status === "ended") {
+    renderEnded();
+  } else if (isNarrator) {
+    renderNarratorDashboard();
+  } else {
+    renderPlayerFlow();
+  }
+}
+
+// ---------- LOBBY ----------
+function renderLobby() {
+  showScreen("screen-lobby");
+  document.getElementById("lobbyCode").textContent = gameCode;
+  const players = gameData.players || {};
+  const list = document.getElementById("lobbyPlayerList");
+  const names = Object.values(players).map(p => p.name);
+  const count = names.length;
+  document.getElementById("playerCount").textContent = count;
+  list.innerHTML = names.length
+    ? names.map(n => `<div class="player-row">${escapeHtml(n)}</div>`).join("")
+    : `<p class="small">No players yet.</p>`;
+
+  const suggestedMafia = getMafiaCount(count);
+  const mafiaCountInput = document.getElementById("mafiaCountInput");
+  const currentMafiaCount = gameData.mafiaCount !== undefined ? gameData.mafiaCount : suggestedMafia;
+
+  if (isNarrator) {
+    mafiaCountInput.disabled = false;
+    if (!mafiaCountTouched) {
+      // Keep auto-suggesting as players join/leave, and keep Firebase in sync with the suggestion
+      mafiaCountInput.value = suggestedMafia;
+      if (gameData.mafiaCount !== suggestedMafia) {
+        gameRef.update({ mafiaCount: suggestedMafia });
+      }
+    } else if (document.activeElement !== mafiaCountInput) {
+      // Don't clobber what they're mid-typing, but reflect the synced value otherwise
+      mafiaCountInput.value = currentMafiaCount;
+    }
+  } else {
+    mafiaCountInput.disabled = true;
+    mafiaCountInput.value = currentMafiaCount;
+  }
+
+  const includeDoctor = gameData.includeDoctor !== false;
+  const includeSheriff = gameData.includeSheriff !== false;
+  const includeBodyguard = gameData.includeBodyguard === true;
+  const includeLovers = gameData.includeLovers === true;
+  const includeNecromancer = gameData.includeNecromancer === true;
+  document.getElementById("doctorToggle").checked = includeDoctor;
+  document.getElementById("sheriffToggle").checked = includeSheriff;
+  document.getElementById("bodyguardToggle").checked = includeBodyguard;
+  document.getElementById("loversToggle").checked = includeLovers;
+  document.getElementById("necromancerToggle").checked = includeNecromancer;
+  document.getElementById("doctorToggle").disabled = !isNarrator;
+  document.getElementById("sheriffToggle").disabled = !isNarrator;
+  document.getElementById("bodyguardToggle").disabled = !isNarrator;
+  document.getElementById("loversToggle").disabled = !isNarrator;
+  document.getElementById("necromancerToggle").disabled = !isNarrator;
+
+  const suspenseMode = gameData.suspenseMode === true;
+  document.getElementById("suspenseToggle").checked = suspenseMode;
+  document.getElementById("suspenseToggle").disabled = !isNarrator;
+
+  document.getElementById("narratorStartBox").style.display = isNarrator ? "block" : "none";
+  document.getElementById("playerWaitBox").style.display = isNarrator ? "none" : "block";
+  if (isNarrator) {
+    const roleSummary = `${currentMafiaCount} Mafia`
+      + (includeDoctor ? " + Doctor" : "")
+      + (includeSheriff ? " + Sheriff" : "")
+      + (includeBodyguard ? " + Bodyguard" : "")
+      + (includeNecromancer ? " + Necromancer" : "")
+      + (includeLovers ? " (+ 2 random Lovers)" : "");
+    document.getElementById("lobbyWarning").textContent = count < 5
+      ? `You have ${count} players. Minimum is 5.`
+      : `${count} players ready — ${roleSummary} will be assigned (15 players max).`;
+  }
+}
+
+function onMafiaCountInput() {
+  mafiaCountTouched = true;
+  const val = parseInt(document.getElementById("mafiaCountInput").value, 10);
+  if (!isNaN(val) && val >= 1) {
+    gameRef.update({ mafiaCount: val });
+  }
+}
+
+function setIncludeDoctor(checked) {
+  if (!isNarrator) return;
+  gameRef.update({ includeDoctor: checked });
+}
+
+function setIncludeSheriff(checked) {
+  if (!isNarrator) return;
+  gameRef.update({ includeSheriff: checked });
+}
+
+function setIncludeBodyguard(checked) {
+  if (!isNarrator) return;
+  gameRef.update({ includeBodyguard: checked });
+}
+
+function setIncludeLovers(checked) {
+  if (!isNarrator) return;
+  gameRef.update({ includeLovers: checked });
+}
+
+function setIncludeNecromancer(checked) {
+  if (!isNarrator) return;
+  gameRef.update({ includeNecromancer: checked });
+}
+
+function setSuspenseMode(checked) {
+  if (!isNarrator) return;
+  gameRef.update({ suspenseMode: checked });
+}
+
+function startGame() {
+  const players = gameData.players || {};
+  const uids = Object.keys(players);
+  if (uids.length < 5) {
+    alert("Need at least 5 players to start.");
+    return;
+  }
+  const includeDoctor = gameData.includeDoctor !== false;
+  const includeSheriff = gameData.includeSheriff !== false;
+  const includeBodyguard = gameData.includeBodyguard === true;
+  const includeLovers = gameData.includeLovers === true;
+  const includeNecromancer = gameData.includeNecromancer === true;
+  const mafiaNum = gameData.mafiaCount !== undefined ? gameData.mafiaCount : getMafiaCount(uids.length);
+  if (!Number.isInteger(mafiaNum) || mafiaNum < 1) {
+    alert("Number of Mafia must be at least 1.");
+    return;
+  }
+
+  // Each of these takes exactly one slot, randomly assigned like Doctor/Sheriff always have.
+  // Lovers is NOT a role — it doesn't take a slot, it's a separate random pairing applied
+  // independently of role assignment (any two players, regardless of role, can be Lovers).
+  const singleSlotRoles = [];
+  if (includeDoctor) singleSlotRoles.push("doctor");
+  if (includeSheriff) singleSlotRoles.push("sheriff");
+  if (includeBodyguard) singleSlotRoles.push("bodyguard");
+  if (includeNecromancer) singleSlotRoles.push("necromancer");
+
+  const specialCount = mafiaNum + singleSlotRoles.length;
+  if (specialCount >= uids.length) {
+    alert("Too many special roles for this many players — leave room for at least 1 Civilian.");
+    return;
+  }
+
+  const shuffled = [...uids].sort(() => Math.random() - 0.5);
+  const mafiaUids = shuffled.slice(0, mafiaNum);
+  let idx = mafiaNum;
+
+  const secretUpdates = {};
+  mafiaUids.forEach(pid => { secretUpdates["roles/" + pid] = "mafia"; });
+  singleSlotRoles.forEach(roleName => {
+    secretUpdates["roles/" + shuffled[idx]] = roleName;
+    idx++;
+  });
+  for (; idx < shuffled.length; idx++) {
+    secretUpdates["roles/" + shuffled[idx]] = "civilian";
+  }
+  secretUpdates["mafiaTeam"] = mafiaUids.reduce((obj, pid) => { obj[pid] = players[pid].name; return obj; }, {});
+
+  let loverNote = "";
+  if (includeLovers) {
+    const loverPair = [...uids].sort(() => Math.random() - 0.5).slice(0, 2);
+    secretUpdates["lovers"] = {
+      a: loverPair[0], b: loverPair[1],
+      aName: players[loverPair[0]].name, bName: players[loverPair[1]].name
+    };
+    loverNote = " Two players have secretly been linked as Lovers.";
+  }
+
+  const updates = {};
+  updates["status"] = "night";
+  updates["round"] = 1;
+  const roleNote = `${mafiaNum} Mafia` + singleSlotRoles.map(r => " + " + ROLE_INFO[r].label).join("");
+  pushLog(updates, `Round 1 begins. ${roleNote} assigned among ${uids.length} players.${loverNote} Night falls...`);
+
+  db.ref("secrets/" + gameCode).update(secretUpdates).then(() => gameRef.update(updates));
+}
+
+// ---------- PLAYER FLOW ----------
+function renderPlayerFlow() {
+  const me = (gameData.players || {})[uid];
+  if (!me) return;
+  const myRole = (secretsData.roles || {})[uid];
+
+  if (myRole === "necromancer") {
+    let dbg = document.getElementById("necroDebugBox");
+    if (!dbg) {
+      dbg = document.createElement("div");
+      dbg.id = "necroDebugBox";
+      dbg.style.cssText = "position:fixed; bottom:0; left:0; right:0; background:#111; color:#b8ffb0; font-size:0.65rem; padding:8px; z-index:999; white-space:pre-wrap; max-height:35vh; overflow:auto; border-top:2px solid #8a5fc9;";
+      document.body.appendChild(dbg);
+    }
+    dbg.textContent = "NECRO DEBUG\nstatus=" + gameData.status + " round=" + gameData.round +
+      "\nnecromancerAnswerAcked=" + necromancerAnswerAcked +
+      "\nnecromancerSelectedTarget=" + necromancerSelectedTarget +
+      "\nnecromancerQuestion=" + JSON.stringify(secretsData.necromancerQuestion);
+  }
+
+  if (!roleAcknowledged && myRole) {
+    const info = ROLE_INFO[myRole];
+    document.getElementById("roleNameDisplay").textContent = info.label;
+    document.getElementById("roleNameDisplay").className = "role-name " + info.cls;
+    let desc = info.desc;
+    if (myRole === "mafia" && secretsData.mafiaTeam) {
+      const teammates = Object.entries(secretsData.mafiaTeam)
+        .filter(([id]) => id !== uid)
+        .map(([, name]) => name);
+      desc += teammates.length
+        ? " Your fellow Mafia: " + teammates.join(", ") + "."
+        : " You are the only Mafia.";
+    }
+    document.getElementById("roleDescDisplay").textContent = desc;
+    showScreen("screen-role");
+    return;
+  }
+
+  // Lover reveal — once per game, independent of role or alive status
+  if (!loverRevealAcked && secretsData.lovers && (secretsData.lovers.a === uid || secretsData.lovers.b === uid)) {
+    const partnerName = secretsData.lovers.a === uid ? secretsData.lovers.bName : secretsData.lovers.aName;
+    document.getElementById("loverRevealText").textContent = "You are in love with " + partnerName + "!";
+    showScreen("screen-lover-reveal");
+    return;
+  }
+
+  if (myRole === "sheriff" && gameData.status !== "night") {
+    const round = gameData.round;
+    const nightNode = (secretsData.night || {})[round] || {};
+    if (nightNode.sheriffResult && sheriffResultAckedRound < round) {
+      showScreen("screen-sheriff-result");
+      const r = nightNode.sheriffResult;
+      document.getElementById("sheriffResultText").textContent = r.isMafia
+        ? `${r.targetName} is MAFIA!`
+        : `${r.targetName} is not Mafia.`;
+      document.getElementById("sheriffResultText").className = "role-name " + (r.isMafia ? "mafia" : "civilian");
+      return;
+    }
+  }
+
+  // Necromancer's own result reveal, once, whenever their question gets answered
+  if (myRole === "necromancer" && secretsData.necromancerQuestion
+      && secretsData.necromancerQuestion.askerUid === uid
+      && typeof secretsData.necromancerQuestion.answer === "boolean" && !necromancerAnswerAcked) {
+    const q = secretsData.necromancerQuestion;
+    showScreen("screen-necromancer-result");
+    document.getElementById("necromancerResultTarget").textContent = q.targetName;
+    document.getElementById("necromancerResultQuestion").textContent = q.question;
+    document.getElementById("necromancerResultAnswer").textContent = q.answer ? "YES" : "NO";
+    return;
+  }
+
+  if (!me.alive) {
+    // A dead player might have a live question waiting on them from the Necromancer
+    const q = secretsData.necromancerQuestion;
+    if (q && q.targetUid === uid && typeof q.answer !== "boolean") {
+      showScreen("screen-necromancer-answer");
+      document.getElementById("necromancerAskerLabel").textContent = "A voice reaches you from the world of the living...";
+      document.getElementById("necromancerQuestionText").textContent = q.question;
+      return;
+    }
+    showScreen("screen-waiting");
+    document.getElementById("waitingText").textContent = "You have been eliminated. You can keep watching the game.";
+    renderPublicLog("publicLogBoxWaiting");
+    return;
+  }
+
+  if (gameData.status === "night") {
+    const round = gameData.round;
+    const nightNode = (secretsData.night || {})[round] || {};
+
+    if (myRole === "mafia") {
+      renderMafiaNightFlow(nightNode, round);
+      return;
+    }
+
+    if (myRole === "bodyguard" && round === 1 && !secretsData.bodyguardAssignment) {
+      renderNightAction("bodyguard");
+      return;
+    }
+
+    if (myRole === "necromancer" && !secretsData.necromancerQuestion) {
+      renderNecromancerAskScreen();
+      return;
+    }
+    if (myRole === "necromancer" && secretsData.necromancerQuestion
+        && secretsData.necromancerQuestion.askerUid === uid
+        && typeof secretsData.necromancerQuestion.answer !== "boolean") {
+      showScreen("screen-necromancer-waiting");
+      return;
+    }
+
+    if (["doctor", "sheriff"].includes(myRole)) {
+      const alreadyChosen = nightNode[myRole + "Target"];
+      if (alreadyChosen) {
+        showScreen("screen-waiting");
+        document.getElementById("waitingText").textContent = "Choice submitted. Waiting for the narrator...";
+        return;
+      }
+      renderNightAction(myRole);
+    } else {
+      showScreen("screen-waiting");
+      document.getElementById("waitingText").textContent = "It's nighttime. Some players are making their choices.";
+    }
+  } else if (gameData.status === "day") {
+    showScreen("screen-day");
+    renderDayLog();
+    document.getElementById("dayPlayerWaitBox").style.display = "block";
+  } else if (gameData.status === "day-vote") {
+    const round = gameData.round;
+    const votes = (gameData.votes || {})[round] || {};
+    if (votes[uid]) {
+      showScreen("screen-waiting");
+      document.getElementById("waitingText").textContent = "Vote submitted. Waiting for others...";
+    } else {
+      renderVoteScreen();
+    }
+  }
+}
+
+function renderNightAction(role) {
+  showScreen("screen-night-action");
+  const titles = {
+    mafia: "Choose who to eliminate",
+    doctor: "Choose who to save",
+    sheriff: "Choose who to investigate",
+    bodyguard: "Choose who to protect for the rest of the game"
+  };
+  document.getElementById("nightActionTitle").textContent = titles[role];
+  const players = gameData.players || {};
+  const list = document.getElementById("nightActionList");
+  list.innerHTML = "";
+  Object.entries(players).forEach(([pid, p]) => {
+    if (!p.alive) return;
+    if (role === "mafia" && pid === uid) return; // mafia can't pick self
+    if (role === "sheriff" && pid === uid) return; // sheriff can't investigate self
+    if (role === "bodyguard" && pid === uid) return; // bodyguard can't guard self
+    const btn = document.createElement("button");
+    btn.className = "target-btn";
+    btn.textContent = p.name + (pid === uid ? " (you)" : "");
+    btn.onclick = () => role === "bodyguard"
+      ? submitBodyguardAssignment(pid, p.name)
+      : submitNightAction(role, pid, p.name);
+    list.appendChild(btn);
+  });
+  document.getElementById("nightActionStatus").textContent = role === "bodyguard"
+    ? "This choice is permanent — you cannot change it later."
+    : "";
+}
+
+function submitBodyguardAssignment(targetUid, targetName) {
+  db.ref("secrets/" + gameCode + "/bodyguardAssignment").set({ targetUid, targetName })
+    .then(() => {
+      const updates = {};
+      pushLog(updates, "The Bodyguard has chosen who to protect for the rest of the game.");
+      gameRef.update(updates);
+    })
+    .catch(e => alert("Could not set bodyguard assignment: " + e.message));
+}
+
+function submitNightAction(role, targetUid, targetName) {
+  const round = gameData.round;
+  const updates = {};
+  updates["night/" + round + "/" + role + "Target"] = targetUid;
+  updates["night/" + round + "/" + role + "TargetName"] = targetName;
+  updates["night/" + round + "/" + role + "By"] = uid;
+  db.ref("secrets/" + gameCode).update(updates).catch(e => alert("Could not submit action: " + e.message));
+}
+
+// ---------- MAFIA CONSENSUS FLOW ----------
+function renderMafiaNightFlow(nightNode, round) {
+  // A target has already been unanimously agreed and locked in for this round
+  if (nightNode.mafiaTarget) {
+    showScreen("screen-waiting");
+    document.getElementById("waitingText").textContent = "Target locked in: " + (nightNode.mafiaTargetName || "") + ". Waiting for the narrator...";
+    return;
+  }
+
+  const proposal = nightNode.mafiaProposal;
+  const mafiaUids = getAliveMafiaUids();
+
+  if (!proposal) {
+    renderMafiaProposeScreen();
+    return;
+  }
+
+  const votes = proposal.votes || {};
+  const hasNo = Object.values(votes).includes(false);
+
+  if (hasNo) {
+    showScreen("screen-night-action");
+    document.getElementById("nightActionTitle").textContent = "No agreement";
+    document.getElementById("nightActionList").innerHTML =
+      `<p class="small">The Mafia didn't unanimously agree on <strong>${escapeHtml(proposal.targetName)}</strong>.</p>`;
+    const btn = document.createElement("button");
+    btn.className = "gold";
+    btn.textContent = "Choose Again";
+    btn.onclick = () => clearMafiaProposal(round);
+    document.getElementById("nightActionList").appendChild(btn);
+    document.getElementById("nightActionStatus").textContent = "";
+    return;
+  }
+
+  const allVoted = mafiaUids.length > 0 && mafiaUids.every(id => votes[id] === true);
+  if (allVoted) {
+    finalizeMafiaTarget(round, proposal);
+    showScreen("screen-waiting");
+    document.getElementById("waitingText").textContent = "All Mafia agreed on " + proposal.targetName + ". Waiting for the narrator...";
+    return;
+  }
+
+  if (votes[uid] === undefined) {
+    renderMafiaVoteScreen(proposal, votes, mafiaUids);
+  } else {
+    showScreen("screen-waiting");
+    const respondedCount = Object.keys(votes).length;
+    document.getElementById("waitingText").textContent = `Waiting on the rest of the Mafia (${respondedCount}/${mafiaUids.length} responded)...`;
+  }
+}
+
+function renderMafiaProposeScreen() {
+  showScreen("screen-night-action");
+  document.getElementById("nightActionTitle").textContent = "Propose a target to the Mafia";
+  const players = gameData.players || {};
+  const list = document.getElementById("nightActionList");
+  list.innerHTML = "";
+  Object.entries(players).forEach(([pid, p]) => {
+    if (!p.alive) return;
+    if (pid === uid) return; // mafia can't propose self
+    const btn = document.createElement("button");
+    btn.className = "target-btn";
+    btn.textContent = p.name;
+    btn.onclick = () => submitMafiaProposal(pid, p.name);
+    list.appendChild(btn);
+  });
+  document.getElementById("nightActionStatus").textContent = "Your fellow Mafia will need to unanimously agree.";
+}
+
+function renderMafiaVoteScreen(proposal, votes, mafiaUids) {
+  showScreen("screen-night-action");
+  document.getElementById("nightActionTitle").textContent = "Do you agree on this target?";
+  const respondedCount = Object.keys(votes).length;
+  const list = document.getElementById("nightActionList");
+  list.innerHTML = `
+    <div class="card" style="background:var(--panel2)">
+      <p style="margin:0 0 6px 0"><strong>${escapeHtml(proposal.targetName)}</strong></p>
+      <p class="small" style="margin:0">Proposed by ${escapeHtml(proposal.proposedByName)} · ${respondedCount}/${mafiaUids.length} responded</p>
+    </div>
+  `;
+  const yesBtn = document.createElement("button");
+  yesBtn.className = "green";
+  yesBtn.textContent = "Yes, agree";
+  yesBtn.onclick = () => submitMafiaVote(true);
+  const noBtn = document.createElement("button");
+  noBtn.className = "secondary";
+  noBtn.textContent = "No, disagree";
+  noBtn.onclick = () => submitMafiaVote(false);
+  list.appendChild(yesBtn);
+  list.appendChild(noBtn);
+  document.getElementById("nightActionStatus").textContent = "";
+}
+
+function submitMafiaProposal(targetUid, targetName) {
+  const round = gameData.round;
+  const votes = {};
+  votes[uid] = true; // proposer auto-agrees with their own pick
+  db.ref("secrets/" + gameCode + "/night/" + round + "/mafiaProposal").set({
+    targetUid,
+    targetName,
+    proposedBy: uid,
+    proposedByName: gameData.players[uid].name,
+    votes,
+    createdAt: firebase.database.ServerValue.TIMESTAMP
+  }).catch(e => alert("Could not submit proposal: " + e.message));
+}
+
+function submitMafiaVote(agree) {
+  const round = gameData.round;
+  db.ref("secrets/" + gameCode + "/night/" + round + "/mafiaProposal/votes/" + uid).set(agree)
+    .catch(e => alert("Could not submit vote: " + e.message));
+}
+
+function clearMafiaProposal(round) {
+  db.ref("secrets/" + gameCode + "/night/" + round + "/mafiaProposal").remove()
+    .catch(e => alert("Could not clear proposal: " + e.message));
+}
+
+function finalizeMafiaTarget(round, proposal) {
+  const updates = {};
+  updates["night/" + round + "/mafiaTarget"] = proposal.targetUid;
+  updates["night/" + round + "/mafiaTargetName"] = proposal.targetName;
+  updates["night/" + round + "/mafiaProposal"] = null;
+  db.ref("secrets/" + gameCode).update(updates)
+    .catch(e => alert("Could not finalize mafia target: " + e.message));
+}
+
+function buildDayLogHtml(round) {
+  const log = gameData.log || {};
+  const entries = Object.values(log).filter(e => e.round === round || !e.round).sort((a,b) => (a.ts||0) - (b.ts||0));
+  return entries.map(e => `<div class="log-entry">${escapeHtml(e.text)}</div>`).join("") || `<p class="small">No events yet.</p>`;
+}
+
+function renderDayLog() {
+  const box = document.getElementById("dayLogBox");
+  if (gameData.suspenseMode === true) {
+    box.innerHTML = `<h2 style="margin-top:0">Suspense Mode</h2><p class="small">The narrator knows what happened — listen to their story.</p>`;
+    return;
+  }
+  box.innerHTML = `<h2 style="margin-top:0">What happened</h2><div id="dayLogList">${buildDayLogHtml(gameData.round)}</div>`;
+}
+
+function renderPublicLog(containerId) {
+  if (gameData.suspenseMode === true) {
+    document.getElementById(containerId).innerHTML = `<h2 style="margin-top:0">Suspense Mode</h2><p class="small">The narrator knows what happened — listen to their story.</p>`;
+    return;
+  }
+  const log = gameData.log || {};
+  const entries = Object.values(log).sort((a,b) => (a.ts||0) - (b.ts||0));
+  document.getElementById(containerId).innerHTML = "<h2 style='margin-top:0'>Game log</h2>" + (entries.map(e =>
+    `<div class="log-entry">${escapeHtml(e.text)}</div>`
+  ).join("") || `<p class="small">No events yet.</p>`);
+}
+
+function renderVoteScreen() {
+  showScreen("screen-vote");
+  const players = gameData.players || {};
+  const list = document.getElementById("voteList");
+  list.innerHTML = "";
+  Object.entries(players).forEach(([pid, p]) => {
+    if (!p.alive) return;
+    const btn = document.createElement("button");
+    btn.className = "target-btn";
+    btn.textContent = p.name + (pid === uid ? " (you)" : "");
+    btn.onclick = () => submitVote(pid);
+    list.appendChild(btn);
+  });
+}
+
+function submitVote(targetUid) {
+  const round = gameData.round;
+  gameRef.child("votes/" + round + "/" + uid).set(targetUid);
+}
+
+function acknowledgeRole() {
+  roleAcknowledged = true;
+  render();
+}
+
+function acknowledgeSheriffResult() {
+  sheriffResultAckedRound = gameData.round;
+  render();
+}
+
+function acknowledgeLoverReveal() {
+  loverRevealAcked = true;
+  render();
+}
+
+// ---------- NECROMANCER ----------
+let necromancerSelectedTarget = null;
+
+function renderNecromancerAskScreen() {
+  showScreen("screen-necromancer-ask");
+  const players = gameData.players || {};
+  const list = document.getElementById("necromancerDeadList");
+  const deadEntries = Object.entries(players).filter(([, p]) => !p.alive);
+  if (deadEntries.length === 0) {
+    list.innerHTML = `<p class="small">No one has died yet — there's no one to ask.</p>`;
+    document.getElementById("necromancerQuestionBox").style.display = "none";
+    return;
+  }
+  list.innerHTML = "";
+  deadEntries.forEach(([pid, p]) => {
+    const btn = document.createElement("button");
+    btn.className = "target-btn" + (necromancerSelectedTarget === pid ? " selected" : "");
+    btn.textContent = p.name;
+    btn.onclick = () => {
+      necromancerSelectedTarget = pid;
+      renderNecromancerAskScreen();
+    };
+    list.appendChild(btn);
+  });
+  document.getElementById("necromancerQuestionBox").style.display = necromancerSelectedTarget ? "block" : "none";
+}
+
+function submitNecromancerQuestion() {
+  if (!necromancerSelectedTarget) return;
+  const question = document.getElementById("necromancerQuestionInput").value.trim();
+  if (!question) return alert("Type a yes/no question first.");
+  const players = gameData.players || {};
+  const payload = {
+    askerUid: uid,
+    askerName: players[uid] ? players[uid].name : "?",
+    targetUid: necromancerSelectedTarget,
+    targetName: players[necromancerSelectedTarget] ? players[necromancerSelectedTarget].name : "?",
+    question,
+    answer: null,
+    answeredAt: null
+  };
+  db.ref("secrets/" + gameCode + "/necromancerQuestion").set(payload)
+    .then(() => {
+      const updates = {};
+      pushLog(updates, "The Necromancer has reached out to someone from beyond the grave tonight...");
+      gameRef.update(updates);
+    })
+    .catch(e => alert("Could not send question: " + e.message));
+}
+
+function skipNecromancerTonight() {
+  necromancerSelectedTarget = null;
+  showScreen("screen-waiting");
+  document.getElementById("waitingText").textContent = "It's nighttime. Some players are making their choices.";
+}
+
+function submitNecromancerAnswer(answer) {
+  db.ref("secrets/" + gameCode + "/necromancerQuestion/answer").set(answer)
+    .then(() => db.ref("secrets/" + gameCode + "/necromancerQuestion/answeredAt").set(firebase.database.ServerValue.TIMESTAMP))
+    .catch(e => alert("Could not send your answer: " + e.message));
+}
+
+function acknowledgeNecromancerResult() {
+  necromancerAnswerAcked = true;
+  render();
+}
+
+// ---------- NARRATOR DASHBOARD ----------
+function renderNarratorDashboard() {
+  showScreen("screen-narrator");
+  const players = gameData.players || {};
+  const roles = secretsData.roles || {};
+  const status = gameData.status;
+  const round = gameData.round;
+
+  document.getElementById("narratorPhasePill").textContent =
+    status === "night" ? `Round ${round} — Night` :
+    status === "day" ? `Round ${round} — Day` :
+    status === "day-vote" ? `Round ${round} — Voting` : status;
+
+  const listEl = document.getElementById("narratorPlayerList");
+  listEl.innerHTML = Object.entries(players).map(([pid, p]) => {
+    const roleLabel = roles[pid] ? ROLE_INFO[roles[pid]].label : "-";
+    return `<div class="player-row">
+      <span>${escapeHtml(p.name)}</span>
+      <span>
+        <span class="tag">${roleLabel}</span>
+        <span class="tag ${p.alive ? "" : "dead"}">${p.alive ? "alive" : "dead"}</span>
+      </span>
+    </div>`;
+  }).join("") || `<p class="small">No players.</p>`;
+
+  const votingDoneThisRound = gameData.voteResolvedForRound === round;
+  document.getElementById("narratorNightBox").style.display = status === "night" ? "block" : "none";
+  document.getElementById("narratorDayBox").style.display = (status === "day" && !votingDoneThisRound) ? "block" : "none";
+  document.getElementById("narratorVoteBox").style.display = status === "day-vote" ? "block" : "none";
+  document.getElementById("narratorAdvanceBox").style.display = (status === "day" && votingDoneThisRound) ? "block" : "none";
+
+  if (status === "night") {
+    const nightNode = (secretsData.night || {})[round] || {};
+    const mafiaUids = getAliveMafiaUids();
+    const mafiaNeeded = mafiaUids.length > 0;
+
+    let mafiaStatusHtml;
+    if (!mafiaNeeded) {
+      mafiaStatusHtml = `<div class="log-entry"><strong>Mafia:</strong> <span class="small">all deceased, no action needed</span></div>`;
+    } else if (nightNode.mafiaTargetName) {
+      mafiaStatusHtml = `<div class="log-entry"><strong>Mafia:</strong> Agreed on ${escapeHtml(nightNode.mafiaTargetName)}</div>`;
+    } else if (nightNode.mafiaProposal) {
+      const votes = nightNode.mafiaProposal.votes || {};
+      const yesCount = mafiaUids.filter(id => votes[id] === true).length;
+      const hasNo = Object.values(votes).includes(false);
+      mafiaStatusHtml = `<div class="log-entry"><strong>Mafia:</strong> Proposing ${escapeHtml(nightNode.mafiaProposal.targetName)} (${yesCount}/${mafiaUids.length} agreed)${hasNo ? " — rejected, choosing again" : ""}</div>`;
+    } else {
+      mafiaStatusHtml = `<div class="log-entry"><strong>Mafia:</strong> <span class="small">waiting for a proposal...</span></div>`;
+    }
+
+    const otherRows = ["doctor", "sheriff"].map(role => {
+      const included = role === "doctor" ? gameData.includeDoctor !== false : gameData.includeSheriff !== false;
+      if (!included) {
+        return `<div class="log-entry"><strong>${ROLE_INFO[role].label}:</strong> <span class="small">not in this game</span></div>`;
+      }
+      const name = nightNode[role + "TargetName"];
+      if (!isRoleActionNeeded(role)) {
+        return `<div class="log-entry"><strong>${ROLE_INFO[role].label}:</strong> <span class="small">deceased, no action needed</span></div>`;
+      }
+      return `<div class="log-entry"><strong>${ROLE_INFO[role].label}:</strong> ${name ? escapeHtml(name) : "<span class='small'>waiting...</span>"}</div>`;
+    }).join("");
+
+    document.getElementById("narratorNightInfo").innerHTML = mafiaStatusHtml + otherRows;
+
+    const mafiaOk = !mafiaNeeded || !!nightNode.mafiaTarget;
+    const doctorOk = !isRoleActionNeeded("doctor") || !!nightNode.doctorTarget;
+    const sheriffOk = !isRoleActionNeeded("sheriff") || !!nightNode.sheriffTarget;
+    const bodyguardOk = !(gameData.includeBodyguard === true && round === 1) || !!secretsData.bodyguardAssignment;
+    document.getElementById("resolveNightBtn").disabled = !(mafiaOk && doctorOk && sheriffOk && bodyguardOk);
+  }
+
+  // Bodyguard — always visible to the narrator once enabled, since it's a one-time assignment
+  if (gameData.includeBodyguard === true) {
+    document.getElementById("narratorBodyguardBox").style.display = "block";
+    if (secretsData.bodyguardAssignment) {
+      document.getElementById("narratorBodyguardInfo").innerHTML =
+        `<div class="log-entry">Protecting: ${escapeHtml(secretsData.bodyguardAssignment.targetName)}</div>`;
+    } else {
+      document.getElementById("narratorBodyguardInfo").innerHTML = `<p class="small">Hasn't chosen yet.</p>`;
+    }
+  } else {
+    document.getElementById("narratorBodyguardBox").style.display = "none";
+  }
+
+  // Lovers — always visible to the narrator once Lovers Mode is enabled (assigned instantly at game start)
+  if (gameData.includeLovers === true) {
+    document.getElementById("narratorLoversBox").style.display = "block";
+    if (secretsData.lovers) {
+      document.getElementById("narratorLoversInfo").innerHTML =
+        `<div class="log-entry">${escapeHtml(secretsData.lovers.aName)} \u2764 ${escapeHtml(secretsData.lovers.bName)}</div>`;
+    } else {
+      document.getElementById("narratorLoversInfo").innerHTML = `<p class="small">Setting up...</p>`;
+    }
+  } else {
+    document.getElementById("narratorLoversBox").style.display = "none";
+  }
+
+  // Necromancer — always visible to the narrator once enabled
+  if (gameData.includeNecromancer === true) {
+    document.getElementById("narratorNecromancerBox").style.display = "block";
+    const q = secretsData.necromancerQuestion;
+    if (!q) {
+      document.getElementById("narratorNecromancerInfo").innerHTML = `<p class="small">Power not used yet.</p>`;
+    } else if (typeof q.answer !== "boolean") {
+      document.getElementById("narratorNecromancerInfo").innerHTML =
+        `<div class="log-entry">${escapeHtml(q.askerName)} asked ${escapeHtml(q.targetName)}: "${escapeHtml(q.question)}" — <span class="small">waiting for answer</span></div>`;
+    } else {
+      document.getElementById("narratorNecromancerInfo").innerHTML =
+        `<div class="log-entry">${escapeHtml(q.askerName)} asked ${escapeHtml(q.targetName)}: "${escapeHtml(q.question)}" — answered <strong>${q.answer ? "YES" : "NO"}</strong></div>`;
+    }
+  } else {
+    document.getElementById("narratorNecromancerBox").style.display = "none";
+  }
+
+  if (status === "day") {
+    document.getElementById("narratorDayInfo").innerHTML = buildDayLogHtml(round);
+    // reveal buttons for anyone who died this round and isn't yet revealed
+    const revealHtml = Object.entries(players)
+      .filter(([pid, p]) => !p.alive && !p.revealed)
+      .map(([pid, p]) => `<button class="secondary" onclick="revealRole('${pid}')">Reveal ${escapeHtml(p.name)}'s role</button>`)
+      .join("");
+    document.getElementById("narratorDayInfo").innerHTML += revealHtml;
+  }
+
+  if (status === "day-vote") {
+    const votes = (gameData.votes || {})[round] || {};
+    const rows = Object.entries(players).filter(([,p]) => p.alive).map(([pid, p]) => {
+      const votedFor = votes[pid] ? (players[votes[pid]] ? players[votes[pid]].name : "?") : "waiting...";
+      return `<div class="log-entry"><strong>${escapeHtml(p.name)}:</strong> ${escapeHtml(votedFor)}</div>`;
+    }).join("");
+    document.getElementById("narratorVoteInfo").innerHTML = rows;
+  }
+
+  renderNarratorLog();
+}
+
+function renderNarratorLog() {
+  const log = gameData.log || {};
+  const entries = Object.values(log).sort((a,b) => (a.ts||0) - (b.ts||0));
+  document.getElementById("narratorLogList").innerHTML = entries.map(e =>
+    `<div class="log-entry">${escapeHtml(e.text)}</div>`
+  ).join("") || `<p class="small">No events yet.</p>`;
+}
+
+function pushLog(updates, text) {
+  const key = "log/entry_" + Date.now();
+  updates[key] = { text, ts: firebase.database.ServerValue.TIMESTAMP, round: gameData ? gameData.round : 0 };
+}
+
+function evaluateWinner(playersSnapshot) {
+  const roles = secretsData.roles || {};
+  const alive = Object.entries(playersSnapshot).filter(([pid, p]) => p.alive);
+  const aliveMafia = alive.filter(([pid]) => roles[pid] === "mafia").length;
+  const aliveOthers = alive.length - aliveMafia;
+  if (aliveMafia === 0) return "town";
+  if (aliveMafia >= aliveOthers) return "mafia";
+  return null;
+}
+
+// If the player who just died is one half of a Lovers pairing, their partner dies of
+// heartbreak too (unless the partner is already dead). Returns extra log text, or null.
+function applyHeartbreak(deadUid, players, snapshot, updates) {
+  const lovers = secretsData.lovers;
+  if (!lovers) return null;
+  let partnerUid = null;
+  if (lovers.a === deadUid) partnerUid = lovers.b;
+  else if (lovers.b === deadUid) partnerUid = lovers.a;
+  if (!partnerUid) return null;
+  if (!snapshot[partnerUid] || !snapshot[partnerUid].alive) return null;
+  updates["players/" + partnerUid + "/alive"] = false;
+  snapshot[partnerUid].alive = false;
+  const partnerName = players[partnerUid] ? players[partnerUid].name : "?";
+  return `${partnerName} died of heartbreak, unable to live without their love.`;
+}
+
+function resolveNight() {
+  const round = gameData.round;
+  const nightNode = (secretsData.night || {})[round] || {};
+  const players = gameData.players || {};
+  const roles = secretsData.roles || {};
+  const snapshot = JSON.parse(JSON.stringify(players)); // for win-check only, doesn't touch live data
+  const mafiaTarget = nightNode.mafiaTarget;
+  const doctorTarget = nightNode.doctorTarget;
+  const sheriffTarget = nightNode.sheriffTarget;
+  const bodyguardTarget = secretsData.bodyguardAssignment ? secretsData.bodyguardAssignment.targetUid : null;
+  const bodyguardUid = Object.keys(roles).find(pid => roles[pid] === "bodyguard" && players[pid] && players[pid].alive);
+
+  const updates = {};
+  const secretUpdates = {};
+  let text = "";
+  let diedUid = null;
+
+  if (!mafiaTarget) {
+    text = "The Mafia has no living members left to act.";
+  } else if (mafiaTarget === doctorTarget) {
+    text = `The Doctor saved ${players[mafiaTarget] ? players[mafiaTarget].name : "someone"}! No one died last night.`;
+  } else if (bodyguardTarget && bodyguardUid && mafiaTarget === bodyguardTarget) {
+    updates["players/" + bodyguardUid + "/alive"] = false;
+    if (snapshot[bodyguardUid]) snapshot[bodyguardUid].alive = false;
+    diedUid = bodyguardUid;
+    text = `${players[bodyguardUid] ? players[bodyguardUid].name : "The Bodyguard"} took the hit protecting ${players[mafiaTarget] ? players[mafiaTarget].name : "someone"} and died instead!`;
+  } else {
+    updates["players/" + mafiaTarget + "/alive"] = false;
+    if (snapshot[mafiaTarget]) snapshot[mafiaTarget].alive = false;
+    diedUid = mafiaTarget;
+    text = `The Mafia struck! ${players[mafiaTarget] ? players[mafiaTarget].name : "Someone"} was found dead this morning.`;
+  }
+
+  if (diedUid) {
+    const heartbreakText = applyHeartbreak(diedUid, players, snapshot, updates);
+    if (heartbreakText) text += " " + heartbreakText;
+  }
+
+  if (sheriffTarget) {
+    const isMafia = (secretsData.roles || {})[sheriffTarget] === "mafia";
+    secretUpdates["night/" + round + "/sheriffResult"] = {
+      targetName: players[sheriffTarget] ? players[sheriffTarget].name : "?",
+      isMafia
+    };
+  }
+
+  const winner = evaluateWinner(snapshot);
+  if (winner) {
+    updates["status"] = "ended";
+    updates["winner"] = winner;
+    text += winner === "town" ? " All Mafia have been eliminated — Town wins!" : " Mafia now match or outnumber the rest of the town — Mafia wins!";
+  } else {
+    updates["status"] = "day";
+  }
+
+  pushLog(updates, text);
+
+  const tasks = [gameRef.update(updates)];
+  if (Object.keys(secretUpdates).length > 0) {
+    tasks.push(db.ref("secrets/" + gameCode).update(secretUpdates));
+  }
+  Promise.all(tasks).catch(e => alert("Error resolving night: " + e.message));
+}
+
+function revealRole(pid) {
+  const p = gameData.players[pid];
+  const role = (secretsData.roles || {})[pid];
+  const updates = {};
+  updates["players/" + pid + "/revealed"] = true;
+  pushLog(updates, `${p.name}'s role is revealed: ${ROLE_INFO[role].label}.`);
+  gameRef.update(updates);
+}
+
+function startVote() {
+  gameRef.update({ status: "day-vote" });
+}
+
+function resolveVote() {
+  const round = gameData.round;
+  const votes = (gameData.votes || {})[round] || {};
+  const players = gameData.players || {};
+  const snapshot = JSON.parse(JSON.stringify(players));
+  const tally = {};
+  Object.values(votes).forEach(targetUid => {
+    tally[targetUid] = (tally[targetUid] || 0) + 1;
+  });
+  let maxVotes = 0, topUid = null, tie = false;
+  Object.entries(tally).forEach(([pid, count]) => {
+    if (count > maxVotes) { maxVotes = count; topUid = pid; tie = false; }
+    else if (count === maxVotes) { tie = true; }
+  });
+
+  const updates = {};
+  let text;
+  if (!topUid || tie) {
+    text = "The vote was tied. No one was eliminated.";
+  } else {
+    updates["players/" + topUid + "/alive"] = false;
+    if (snapshot[topUid]) snapshot[topUid].alive = false;
+    text = `${players[topUid].name} was voted out by the group.`;
+    const heartbreakText = applyHeartbreak(topUid, players, snapshot, updates);
+    if (heartbreakText) text += " " + heartbreakText;
+  }
+
+  const winner = evaluateWinner(snapshot);
+  if (winner) {
+    updates["status"] = "ended";
+    updates["winner"] = winner;
+    text += winner === "town" ? " All Mafia have been eliminated — Town wins!" : " Mafia now match or outnumber the rest of the town — Mafia wins!";
+  } else {
+    updates["status"] = "day";
+    updates["voteResolvedForRound"] = round;
+  }
+
+  pushLog(updates, text);
+  gameRef.update(updates);
+}
+
+function startNextNight() {
+  const updates = {};
+  updates["round"] = gameData.round + 1;
+  updates["status"] = "night";
+  pushLog(updates, `Round ${gameData.round + 1} begins. Night falls again...`);
+  gameRef.update(updates);
+}
+
+// ---------- ENDED ----------
+function renderEnded() {
+  showScreen("screen-ended");
+  const players = gameData.players || {};
+  const roles = secretsData.roles || {};
+  const winner = gameData.winner;
+  document.getElementById("winnerTitle").textContent = winner === "town" ? "🏆 Town Wins!" : "🔪 Mafia Wins!";
+  document.getElementById("winnerSub").textContent = winner === "town"
+    ? "The village found and eliminated the Mafia."
+    : "The Mafia outnumbered the town.";
+
+  const lovers = secretsData.lovers;
+  const loversBox = document.getElementById("loversWinBox");
+  if (lovers && players[lovers.a] && players[lovers.b] && players[lovers.a].alive && players[lovers.b].alive) {
+    loversBox.style.display = "block";
+    document.getElementById("loversWinText").textContent =
+      `${lovers.aName} and ${lovers.bName} survived together and win as a pair, no matter who else won.`;
+  } else {
+    loversBox.style.display = "none";
+  }
+
+  document.getElementById("finalRolesList").innerHTML = Object.entries(players).map(([pid, p]) => {
+    const role = roles[pid];
+    const label = role && ROLE_INFO[role] ? ROLE_INFO[role].label : "Unknown";
+    return `<div class="player-row"><span>${escapeHtml(p.name)}</span><span class="tag">${label}</span></div>`;
+  }).join("");
+}
+
+function backToStart() {
+  if (gameRef) {
+    gameRef.remove()
+      .catch(e => console.warn("Could not delete game data:", e))
+      .finally(() => location.reload());
+  } else {
+    location.reload();
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
